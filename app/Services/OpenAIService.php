@@ -3,9 +3,12 @@
 namespace App\Services;
 
 use App\Services\Contracts\AIServiceInterface;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Factory as HttpFactory;
+use Illuminate\Http\Client\RequestException;
 use JsonException;
 use RuntimeException;
+use Illuminate\Support\Facades\Log;
 
 class OpenAIService implements AIServiceInterface
 {
