@@ -7,6 +7,7 @@ use App\Models\Ticket;
 use App\Services\Contracts\AIServiceInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 class TicketApiTest extends TestCase
@@ -23,7 +24,7 @@ class TicketApiTest extends TestCase
         ]);
 
         $response
-            ->assertStatus(201)
+            ->assertStatus(Response::HTTP_CREATED)
             ->assertJsonStructure(['id', 'status'])
             ->assertJson([
                 'status' => 'Open',
@@ -74,7 +75,7 @@ class TicketApiTest extends TestCase
         $response = $this->getJson('/api/tickets/999999');
 
         $response
-            ->assertStatus(404)
+            ->assertStatus(Response::HTTP_NOT_FOUND)
             ->assertJson([
                 'message' => 'Ticket not found',
             ]);
