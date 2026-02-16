@@ -55,6 +55,15 @@ class ProcessTicketAIJob implements ShouldQueue
             }
         }
 
+        if (!in_array($analysis['urgency'], ['Low', 'Medium', 'High'], true)) {
+            Log::error('Ticket AI response has invalid urgency value.', [
+                'ticket_id' => $this->ticketId,
+                'urgency' => $analysis['urgency'],
+            ]);
+
+            return;
+        }
+
         $ticket->category = $analysis['category'];
         $ticket->sentiment = $analysis['sentiment'];
         $ticket->suggested_reply = $analysis['reply'];
