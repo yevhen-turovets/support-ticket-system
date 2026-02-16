@@ -99,6 +99,10 @@ class OpenAIService implements AIServiceInterface
             }
         }
 
+        if (!in_array($decoded['urgency'], ['Low', 'Medium', 'High'], true)) {
+            throw new RuntimeException('OpenAI response has invalid urgency value.');
+        }
+
         return [
             'category' => $decoded['category'],
             'sentiment' => $decoded['sentiment'],
@@ -118,11 +122,17 @@ Do not use code blocks.
 Output MUST be valid JSON only.
 Use this exact schema:
 {
-  "category": "Technical | Billing | General",
+  "category": "...",
   "sentiment": "Positive | Neutral | Negative",
   "reply": "string",
   "urgency": "Low | Medium | High"
 }
+Urgency levels:
+- Low: routine request, no immediate impact.
+- Medium: important issue, should be handled soon.
+- High: urgent issue, immediate attention required.
+If sentiment is strongly Negative, urgency MUST be "High".
+Apply this rule strictly and deterministically.
 PROMPT;
     }
 }
