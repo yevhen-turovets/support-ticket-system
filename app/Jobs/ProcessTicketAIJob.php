@@ -9,6 +9,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class ProcessTicketAIJob implements ShouldQueue
 {
@@ -31,7 +33,27 @@ class ProcessTicketAIJob implements ShouldQueue
             return;
         }
 
-        $analysis = $aiService->analyzeTicket($ticket->description);
+        try {
+            $analysis = $aiService->analyzeTicket($ticket->description);
+        } catch (Throwable $exception) {
+            Log::error('Ticket AI processing failed.', [
+                'ticket_id' => $this->ticketId,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return;
+        }
+
+        foreach (['category', 'sentiment', 'reply', 'urgency'] as $key) {
+            if (!array_key_exists($key, $analysis) || !is_string($analysis[$key])) {
+                Log::error('Ticket AI response is missing required keys.', [
+                    'ticket_id' => $this->ticketId,
+                    'missing_or_invalid_key' => $key,
+                ]);
+
+                return;
+            }
+        }
 
         $ticket->category = $analysis['category'];
         $ticket->sentiment = $analysis['sentiment'];
