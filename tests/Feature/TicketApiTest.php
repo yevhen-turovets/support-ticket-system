@@ -69,6 +69,17 @@ class TicketApiTest extends TestCase
         $this->assertSame('Low', $ticket->urgency);
     }
 
+    public function test_show_returns_404_when_ticket_not_found(): void
+    {
+        $response = $this->getJson('/api/tickets/999999');
+
+        $response
+            ->assertStatus(404)
+            ->assertJson([
+                'message' => 'Ticket not found',
+            ]);
+    }
+
     public function test_ticket_is_not_updated_if_ai_response_is_invalid(): void
     {
         $this->app->instance(AIServiceInterface::class, new class implements AIServiceInterface
