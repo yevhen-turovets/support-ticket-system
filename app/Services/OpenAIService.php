@@ -35,24 +35,33 @@ class OpenAIService implements AIServiceInterface
             throw new RuntimeException('OpenAI model is not configured.');
         }
 
-        $response = $this->http
-            ->withToken($apiKey)
-            ->acceptJson()
-            ->asJson()
-            ->post('https://api.openai.com/v1/chat/completions', [
-                'model' => $model,
-                'messages' => [
-                    [
-                        'role' => 'system',
-                        'content' => $this->systemPrompt(),
+        try {
+            $response = $this->http
+                ->withToken($apiKey)
+                ->acceptJson()
+                ->asJson()
+                ->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => $model,
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => $this->systemPrompt(),
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => $text,
+                        ],
                     ],
-                    [
-                        'role' => 'user',
-                        'content' => $text,
-                    ],
-                ],
-            ])
-            ->throw();
+                ])
+                ->throw();
+        } catch (ConnectionException|RequestException $exception) {
+            Log::error('OpenAI API request failed.', [
+                'error' => $exception->getMessage(),
+                'text_length' => strlen($text),
+            ]);
+
+            throw $exception;
+        }
 
         $content = $response->json('choices.0.message.content');
 
@@ -69,7 +78,12 @@ class OpenAIService implements AIServiceInterface
         try {
             $decoded = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            throw new RuntimeException('OpenAI returned invalid JSON response.', 0, $exception);
+            Log::error('OpenAI JSON decode failed.', [
+                'error' => $exception->getMessage(),
+                'text_length' => strlen($text),
+            ]);
+
+            throw $exception;
         }
 
         if (!is_array($decoded)) {
