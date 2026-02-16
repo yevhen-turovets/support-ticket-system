@@ -35,7 +35,7 @@ class TicketApiTest extends TestCase
             'status' => 'Open',
         ]);
 
-        Queue::assertDispatched(ProcessTicketAIJob::class);
+        Queue::assertPushed(ProcessTicketAIJob::class);
     }
 
     public function test_process_ticket_ai_job_updates_ticket_with_enrichment_data(): void
