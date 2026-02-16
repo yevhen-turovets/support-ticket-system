@@ -49,6 +49,34 @@ composer install
 
 Application URL: `http://localhost`
 
+## AI & Queue Setup
+
+Set these values in `.env`:
+
+```bash
+OPENAI_API_KEY=your_api_key
+OPENAI_MODEL=your_model
+QUEUE_CONNECTION=database
+```
+
+Make sure migrations are applied:
+
+```bash
+./vendor/bin/sail artisan migrate
+```
+
+Start a queue worker (required for AI processing jobs):
+
+```bash
+# Local
+php artisan queue:work
+
+# Sail
+./vendor/bin/sail artisan queue:work
+```
+
+Note: `POST /api/tickets` dispatches background AI processing. If no worker is running, `category`, `sentiment`, `suggested_reply`, and `urgency` will remain unset.
+
 ## Useful Sail Commands
 
 ```bash
