@@ -44,12 +44,7 @@ class OpenAIService implements AIServiceInterface
                 'messages' => [
                     [
                         'role' => 'system',
-                        'content' => 'You are a Helpful Customer Support Agent. '
-                            .'Respond with strict JSON only. '
-                            .'No markdown. '
-                            .'No explanations. '
-                            .'Use this exact schema: '
-                            .'{"category":"...","sentiment":"...","reply":"...","urgency":"Low|Medium|High"}.',
+                        'content' => $this->systemPrompt(),
                     ],
                     [
                         'role' => 'user',
@@ -61,14 +56,20 @@ class OpenAIService implements AIServiceInterface
 
         $content = $response->json('choices.0.message.content');
 
-        if (!is_string($content) || $content === '') {
+        if (!is_string($content)) {
             throw new RuntimeException('OpenAI response content is missing.');
+        }
+
+        $content = trim($content);
+
+        if ($content === '') {
+            throw new RuntimeException('OpenAI response content is empty.');
         }
 
         try {
             $decoded = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            throw new RuntimeException('OpenAI response is not valid JSON.', 0, $exception);
+            throw new RuntimeException('OpenAI returned invalid JSON response.', 0, $exception);
         }
 
         if (!is_array($decoded)) {
@@ -87,5 +88,24 @@ class OpenAIService implements AIServiceInterface
             'reply' => $decoded['reply'],
             'urgency' => $decoded['urgency'],
         ];
+    }
+
+    private function systemPrompt(): string
+    {
+        return <<<'PROMPT'
+You are a Helpful Customer Support Agent.
+Return STRICT raw JSON only.
+Do not use markdown.
+Do not provide explanations.
+Do not use code blocks.
+Output MUST be valid JSON only.
+Use this exact schema:
+{
+  "category": "Technical | Billing | General",
+  "sentiment": "Positive | Neutral | Negative",
+  "reply": "string",
+  "urgency": "Low | Medium | High"
+}
+PROMPT;
     }
 }
